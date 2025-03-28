@@ -42,6 +42,11 @@ pub const GameOfLife = struct {
             }
         }
 
+        for (self.cells) |row| {
+            allocator.free(row);
+        }
+        allocator.free(self.cells);
+
         self.cells = new_cells;
     }
 

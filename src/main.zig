@@ -3,15 +3,15 @@ const rl = @import("raylib");
 const gameOfLife = @import("game_of_life.zig").GameOfLife;
 
 pub fn main() !void {
-    const cellsize: i32 = 5;
-    const grid_w: i32 = 100;
-    const grid_h: i32 = 100;
+    const cellsize: i32 = 2;
+    const grid_w: i32 = 500;
+    const grid_h: i32 = 500;
 
     const window_w: i32 = cellsize * grid_w;
     const window_h: i32 = cellsize * grid_h;
 
     rl.initWindow(window_w, window_h, "Game of Life");
-    rl.setTargetFPS(8);
+    rl.setTargetFPS(200);
 
     //init game of life
     var game = try gameOfLife.init(window_h, window_w);
