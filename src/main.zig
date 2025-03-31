@@ -15,6 +15,7 @@ const GameState = struct {
     game: gameOfLife,
     interaction_state: InteractionState,
     fps: i32,
+    bounds: u32,
 };
 
 var state: GameState = GameState{
@@ -24,6 +25,7 @@ var state: GameState = GameState{
     .game = undefined,
     .interaction_state = InteractionState.RunnigSim,
     .fps = 60,
+    .bounds = 80,
 };
 
 pub fn main() !void {
@@ -33,17 +35,16 @@ pub fn main() !void {
     rl.initWindow(window_w, window_h, "Game of Life");
     rl.setTargetFPS(state.fps);
 
-    state.game = try gameOfLife.init();
-    const starting_cells = [_]Point{
-        Point{ .x = 20, .y = 20 },
-        Point{ .x = 21, .y = 21 },
-        Point{ .x = 21, .y = 22 },
-        Point{ .x = 20, .y = 22 },
-        Point{ .x = 19, .y = 22 },
-    };
+    state.game = try gameOfLife.init(state.bounds);
+    // const starting_cells = [_]Point{
+    //     Point{ .x = 20, .y = 20 },
+    //     Point{ .x = 21, .y = 21 },
+    //     Point{ .x = 21, .y = 22 },
+    //     Point{ .x = 20, .y = 22 },
+    //     Point{ .x = 19, .y = 22 },
+    // };
 
-    try state.game.set_cells(starting_cells[0..]);
-    state.game.print();
+    // try state.game.set_cells(starting_cells[0..]);
 
     while (!rl.windowShouldClose()) {
         rl.beginDrawing();
@@ -60,7 +61,13 @@ pub fn main() !void {
             if (entry.value_ptr.*) {
                 const x = entry.key_ptr.x;
                 const y = entry.key_ptr.y;
-                rl.drawRectangle(x * state.cellsize, y * state.cellsize, state.cellsize, state.cellsize, .gray);
+                rl.drawRectangle(
+                    (@divTrunc(state.grid_w, 2) + x) * state.cellsize,
+                    (@divTrunc(state.grid_h, 2) + y) * state.cellsize,
+                    state.cellsize,
+                    state.cellsize,
+                    .gray,
+                );
             }
         }
 
@@ -70,6 +77,7 @@ pub fn main() !void {
         }
 
         rl.drawFPS(10, 10);
+
         rl.drawText("Pause with SPACE and resume with ENTER\n MOUSE1 to draw cells when paused", 10, 30, 20, .black);
         rl.clearBackground(.white);
     }
@@ -83,8 +91,8 @@ fn draw_cells() !void {
         const mouse_y = mouse_pos.y / @as(f32, @floatFromInt(state.cellsize));
 
         try state.game.set_cells(&[_]Point{Point{
-            .x = @intFromFloat(mouse_x),
-            .y = @intFromFloat(mouse_y),
+            .x = @as(i32, @intFromFloat(mouse_x)) - @divTrunc(state.grid_w, 2),
+            .y = @as(i32, @intFromFloat(mouse_y)) - @divTrunc(state.grid_h, 2),
         }});
     }
 }

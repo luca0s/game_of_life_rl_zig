@@ -4,11 +4,13 @@ pub const Point = struct { x: i32, y: i32 };
 
 pub const GameOfLife = struct {
     cells: std.AutoHashMap(Point, bool),
+    bounds: ?u32 = null,
 
-    pub fn init() !GameOfLife {
+    pub fn init(bounds: ?u32) !GameOfLife {
         const allocator = std.heap.page_allocator;
         return .{
             .cells = std.AutoHashMap(Point, bool).init(allocator),
+            .bounds = bounds,
         };
     }
 
@@ -18,9 +20,22 @@ pub const GameOfLife = struct {
         var iter = self.cells.iterator();
 
         while (iter.next()) |entry| {
-            const num_neighbours = get_num_of_neighbours(self.cells, entry.key_ptr.*);
+            const point = Point{
+                .x = entry.key_ptr.x,
+                .y = entry.key_ptr.y,
+            };
 
-            if (entry.value_ptr.*) {
+            const cell_state = entry.value_ptr.*;
+
+            if (self.bounds) |bounds| {
+                if (@abs(point.x) > bounds or @abs(point.y) > bounds) {
+                    continue;
+                }
+            }
+
+            const num_neighbours = get_num_of_neighbours(self.cells, point);
+
+            if (cell_state) {
                 const alive = switch (num_neighbours) {
                     0...1 => false,
                     2...3 => true,
@@ -28,8 +43,8 @@ pub const GameOfLife = struct {
                 };
 
                 if (alive or num_neighbours > 0) {
-                    try new_cells.put(Point{ .x = entry.key_ptr.*.x, .y = entry.key_ptr.*.y }, alive);
-                    try add_neighbours(&new_cells, entry.key_ptr.*);
+                    try new_cells.put(Point{ .x = point.x, .y = point.y }, alive);
+                    try add_neighbours(&new_cells, point);
                 }
             } else {
                 const alive = switch (num_neighbours) {
@@ -38,8 +53,8 @@ pub const GameOfLife = struct {
                 };
 
                 if (alive or num_neighbours > 3) {
-                    try new_cells.put(Point{ .x = entry.key_ptr.*.x, .y = entry.key_ptr.*.y }, alive);
-                    try add_neighbours(&new_cells, entry.key_ptr.*);
+                    try new_cells.put(Point{ .x = point.x, .y = point.y }, alive);
+                    try add_neighbours(&new_cells, point);
                 }
             }
         }
