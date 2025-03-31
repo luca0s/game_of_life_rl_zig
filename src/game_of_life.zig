@@ -50,13 +50,11 @@ pub const GameOfLife = struct {
 
     pub fn set_cells(self: *GameOfLife, points: []const Point) !void {
         for (points) |point| {
-            std.debug.print("Setting cell: x={} y={}\n", .{ point.x, point.y });
             if (self.cells.getEntry(point)) |entry| {
                 if (entry.value_ptr.*) {
                     continue;
                 }
             }
-            std.debug.print("Cell set", .{});
             try self.cells.put(point, true);
             try add_neighbours(&self.cells, point);
         }

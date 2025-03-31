@@ -3,7 +3,7 @@ const rl = @import("raylib");
 const gameOfLife = @import("game_of_life.zig").GameOfLife;
 const Point = @import("game_of_life.zig").Point;
 
-const UiState = enum {
+const InteractionState = enum {
     DrawNewCells,
     RunnigSim,
 };
@@ -13,7 +13,8 @@ const GameState = struct {
     grid_w: i32,
     grid_h: i32,
     game: gameOfLife,
-    ui_state: UiState,
+    interaction_state: InteractionState,
+    fps: i32,
 };
 
 var state: GameState = GameState{
@@ -21,7 +22,8 @@ var state: GameState = GameState{
     .grid_w = 200,
     .grid_h = 200,
     .game = undefined,
-    .ui_state = UiState.RunnigSim,
+    .interaction_state = InteractionState.RunnigSim,
+    .fps = 60,
 };
 
 pub fn main() !void {
@@ -29,7 +31,7 @@ pub fn main() !void {
     const window_h: i32 = state.cellsize * state.grid_h;
 
     rl.initWindow(window_w, window_h, "Game of Life");
-    rl.setTargetFPS(30);
+    rl.setTargetFPS(state.fps);
 
     state.game = try gameOfLife.init();
     const starting_cells = [_]Point{
@@ -48,9 +50,9 @@ pub fn main() !void {
         defer rl.endDrawing();
 
         if (rl.isKeyPressed(rl.KeyboardKey.space)) {
-            state.ui_state = UiState.DrawNewCells;
+            state.interaction_state = InteractionState.DrawNewCells;
         } else if (rl.isKeyPressed(.enter)) {
-            state.ui_state = UiState.RunnigSim;
+            state.interaction_state = InteractionState.RunnigSim;
         }
 
         var iter = state.game.cells.iterator();
@@ -62,17 +64,18 @@ pub fn main() !void {
             }
         }
 
-        switch (state.ui_state) {
-            UiState.DrawNewCells => try draw_cells_ui(),
-            UiState.RunnigSim => try state.game.update(),
+        switch (state.interaction_state) {
+            InteractionState.DrawNewCells => try draw_cells(),
+            InteractionState.RunnigSim => try state.game.update(),
         }
 
         rl.drawFPS(10, 10);
+        rl.drawText("Pause with SPACE and resume with ENTER\n MOUSE1 to draw cells when paused", 10, 30, 20, .black);
         rl.clearBackground(.white);
     }
 }
 
-fn draw_cells_ui() !void {
+fn draw_cells() !void {
     if (rl.isMouseButtonDown(.left)) {
         const mouse_pos = rl.getMousePosition();
 
